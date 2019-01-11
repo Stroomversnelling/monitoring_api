@@ -1,0 +1,256 @@
+openapi: 3.0.0
+# Added by API Auto Mocking Plugin
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://enermatics.eu/test/energiesprong/performancev2/1.0.0
+info:
+  version: "0.4.4"
+  title: Stroomversnelling PDB API
+  description: >-
+    This API describes how data can be requested from the performance database of a monitoring provider. The full documentation for this API (still under development) can be requested by sending an email to mwitkamp@stroomversnelling.nl.
+security:
+  - application:
+      - read
+      - write
+paths:
+  # '/{connection_id}/configs':
+  # get:
+  #   description: Returns all available configs for a specific connection. This might differ for different use cases.
+
+ '/{connection_id}/profile':
+    get:
+      summary: list profile per connection
+      description: 'Returns the profile (=applicable standards, guarantees and thresholds) for a specific connection'
+      parameters: 
+      - name: connection_id
+        in: path
+        description: Unique connection identifier
+        required: true
+        schema: 
+          type: string
+      responses:
+        '200': 
+          description: OK
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/profile'
+        '400':
+          description: Bad input parameter
+          
+ '/{connection_id}/config':
+    get:
+      summary: list variables per connection
+      description: Returns the config (=available variables) for a specific connection
+      parameters: 
+      - name: connection_id
+        in: path
+        description: Unique connection identifier
+        required: true
+        schema: 
+          type: string
+      responses:
+        '200': 
+          description: OK
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/config'
+        '400':
+          description: Bad input parameter
+          
+  # '/{connection_id}/config/{config_id}':
+  # post:
+  #   description: Updates a config for a specific connection
+  
+ '/data_objects/{connection_id}':
+    get:
+      summary: returns measurements per connection
+      description: Returns a specified collection of data for a specific connection.
+      parameters: 
+      - name: connection_id
+        in: path
+        description: Unique connection identifier
+        required: true
+        schema: 
+          type: string
+      - name: start_time
+        in: query
+        description: 'Starting time of requested measurements in seconds (yyyy-mm-dd hh:im:ss , inclusive)'
+        required: true
+        schema: 
+          type: string
+      - name: end_time
+        in: query
+        description: 'End time of requested measurements in seconds (yyyy-mm-dd hh:im:ss, exclusive)'
+        required: true
+        schema: 
+          type: string
+      - name: resolution
+        in: query
+        description: Requested resolution in seconds between measurements.
+        required: true
+        schema: 
+          type: integer
+      - name: option
+        in: query
+        description: aggregate measurements.
+        required: false
+        schema: 
+          type: string
+          enum: 
+            - delta_day
+            - delta_week
+            - delta_month
+      - name: object_id
+        in: query
+        description: "get configuration for specific object including its members (optional, leave empty for E_total)"
+        required: false
+        schema: 
+          type: string
+      - name: data_objects
+        in: query
+        description: Describes available variables and their measurement details.
+        required: false
+        schema: 
+          type: array
+          items: 
+            $ref: '#/components/schemas/data_object'
+      responses:
+        '200': 
+          description: OK
+          content: 
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  type: object
+                  properties:
+                    data_object: 
+                      $ref: '#/components/schemas/data_object'
+                    time_series:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/data_point'
+        '400':
+          description: Bad input parameter
+
+components:
+  schemas:
+    profile:
+      type: object
+      description: 'The profile object describes information about the connection (=home), which enables the user to interpret the config and data_object data. This information can contain a) applicable standards, such as EPV, NOM Keur, Monitoring Norm, b) connection specifics, such as surface area.'
+      required:
+        - name
+        - version
+        - rel_data_objects
+      properties:
+        name:
+          type: string
+          description: 'The profile describes the standards and data related to a single connection. For example: EPV, NOM Keur, Monitoring Standard.'
+        version:
+          type: string
+          description: Version of the standard
+        rel_data_objects:
+          type: array
+          description: All related data objects
+          items: 
+            $ref: '#/components/schemas/data_object'
+    config:
+      type: object
+      description: 'The config object is unique to a connection (=home) and describes a) which data objects (=variables) are relevant to this connection, b) what the target values are for these variables for this connection, and c) in the case that these variables are not measured but calculated, how these variables are calculated from measurements for this connection.'
+      required:
+        - config_id
+        - name
+        - rel_data_objects
+      properties:
+        config_id:
+          type: integer
+          description: Unique config identifier
+        name:
+          type: string
+          description: The config describes the variables related to a single connection.
+        rel_data_objects:
+          type: array
+          description: All related data objects
+          items: 
+            $ref: '#/components/schemas/data_object'
+        # TO DO: calculation_data_objects:
+        #   how to define that e.g. Egen = Esol + Ewin? And do we have to define that? (For Qsh we do!)
+        # TO DO: reference_value:
+        #   how to set the target values for specific data_objects for a specific connection?
+    data_object: 
+      type: object
+      description: The data_object object describes the data that comes from a sensor.
+      required: 
+        - object_id
+        - name
+        - unit
+        - granularity
+        - measurement
+      properties:
+        object_id:
+          type: integer
+          description: Unique identifier of the data_object.
+        name:
+          type: string
+          description: Name given to the data_object. It is preferable to follow the API guidelines as detailed in the documentation. 
+        description:
+          type: string
+          description: Describes what the data_object measures.
+          minLength: 1
+          maxLength: 250
+        unit: 
+          type: string
+          description: Gives the SI (or SI derived) unit of measurement.
+        granularity: 
+          type: integer
+          description: Gives the granularity in number of seconds between measurements.
+        quality: 
+          type: string
+          description: Describes the quality of the measurement (e.g. MID).
+        measurement: 
+          type: integer
+          description: Lists the data_point object where the data is stored.  #is this correct?
+    data_point:
+      type: object
+      description: The data_point object contains the data that comes from a sensor.
+      required:
+        - timestamp
+        - value
+      properties:
+        # does this not need a data_point_id??
+        timestamp: 
+          type: integer
+          description: POSIX Epoch in seconds.
+          format: int32
+        value: 
+          type: number
+          format: float
+    connection:
+      type: object
+      description: 'The connection object lists which configs are available for a given connection (=home).'
+      required:
+        - connection_id
+        - config
+      properties:
+        connection_id: 
+          type: integer
+          description: 'Unique identifier for a connection. Must not be traceable to a location or person.'
+        config: 
+          $ref: '#/components/schemas/config'
+    # specification:
+    #   type: object
+    #   description: The specification object lists a) which data objects are required for meeting a certain standard (e.g. EPV or NOM Keur) and b) what the minimum value is for those data objects according to that standard.
+    # TO DO specification:
+    #   describes the variables/data objects that are required for a specific specification (e.g. nom)
+  securitySchemes:
+    application:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: 'https://enermatics.eu/test/token'
+          scopes:
+            write: allows modifying resources
+            read: allows reading resources
+            configread: allows reading configuration
