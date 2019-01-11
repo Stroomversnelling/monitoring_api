@@ -25,6 +25,6 @@ Standard Github workflow applies. On top of that, the following is proposed:
 2. If you encounter bugs or want to request additional features, please use the "Issues" section.  
 3. If there are important discussions between now and the 24th of January, please use the "Wiki" section to propose changes and discuss the merits of these changes.  
 4. If you learn something about the API and its implementation, please use the "Wiki" section to add to the documentation.  
-5. If the functionality of Swagger is required (e.g. stub generation) and your branch is not yet in SwaggerHub, every company is expected to use their own Swagger Editor or SwaggerHub environment to import their branch of the API specifications.  
+5. If the functionality of Swagger is required (e.g. stub generation or visualizing the yaml) and your branch is not yet in SwaggerHub, every company is expected to use their own Swagger Editor, SwaggerHub environment or other yaml editor to use their branch of the API specifications.  
 
 If you need anything in the meantime, please contact the admin, mwitkamp@stroomversnelling.nl.  
