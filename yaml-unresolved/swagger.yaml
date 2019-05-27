@@ -1,0 +1,361 @@
+openapi: 3.0.0
+# Added by API Auto Mocking Plugin
+servers:
+  - description: SwaggerHub API Auto Mocking
+    url: https://enermatics.eu/test/energiesprong/performancev2/1.0.0
+info:
+  version: "0.5.0"
+  title: Stroomversnelling PDB API
+  description: >-
+    The PDB API is part of a standard for exchanging energy performance monitoring data. <br/> > The other part of this standard can be found here: https://app.swaggerhub.com/apis/energiesprong/user/0.5.0. <br/> > The full documentation for the standard is available here: https://github.com/Stroomversnelling/monitoring_api/wiki. <br/><br/>The PDB API describes how energy performance data can be requested from the performance database (PDB) of a monitoring provider. <br/><br/>This standard is still in development and is provided as-is. Clarification and further information can be requested by sending an email to mwitkamp@stroomversnelling.nl. Stroomversnelling is a not-for profit association of mostly housing cooperations, building companies and municipalities striving to facilitate the renewable energy transition in the built environment. This API was co-developed with industry partners Enermatics, LENS, Fifthplay, ABB, Enervalis and Swycs.<br/><br/>Technical notes: <br/> > This version of the PDB API is read-only. However, future versions may include the possibility to write. <br/> > At the moment, the bearer tokens contain custom claims such as the user's role and targeted PDB for which the token was created. This needs to be validated by the PDB according to the JWT standard. Read-only access is assumed for now.
+
+security:
+  - application:
+      - read
+  - JWTBearerAuth: []
+
+paths:
+  '/{connection_id}/profile':
+    get:
+      summary: Provides the profile object for a specific connection.
+      description: Provides the profile object for a specific connection, which includes metadata about the connection. This metadata includes the timezone and country in which the connection is located, and it may include scrambled GPS coordinates for a more precise location. The profile can also return an array of norms that the connections supports (optional).
+      parameters: 
+      - name: connection_id
+        in: path
+        description: Unique connection identifier
+        required: true
+        schema: 
+          type: string
+      responses:
+        '200': 
+          description: OK
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/profile'
+        '400':
+          description: Bad input parameter
+  '/{connection_id}/config':
+    get:
+      summary: List all the available data objects available for a specific connection.
+      description: Returns an array of all available data objects available for the specific connection, plus their definitions. Optionally, this can be limited to return only objects that are part of a certain monitoring norm.
+      parameters: 
+      - name: connection_id
+        in: path
+        description: Unique connection identifier
+        required: true
+        schema: 
+          type: string
+      - name: norm
+        in: query
+        description: Optional. The name of a norm can be used to filter for variables related to that supported norm. Note that the norm version will match the version in the connection profile.
+        schema:
+          type: string
+      responses:
+        '200': 
+          description: OK
+          content: 
+            application/json:
+              schema: 
+                $ref: '#/components/schemas/config'
+        '400':
+          description: Bad input parameter
+          
+  '/{connection_id}/data_object':
+    get:
+      summary: Returns an array of connection specific time series of a data_object.
+      description: Returns an array of connection specific time series of a data_object.  
+      parameters: 
+      - name: connection_id
+        in: path
+        description: Unique connection identifier
+        required: true
+        schema: 
+          type: string
+      - name: start
+        in: query
+        description: Start timestamp of requested measurements, in seconds (POSIX).
+        required: true
+        schema: 
+          type: number
+      - name: end
+        in: query
+        description: End timestamp of requested measurements, in seconds (POSIX).
+        required: true
+        schema: 
+          type: number
+      - name: interval
+        in: query
+        description: Optional. If not given, the "day" interval is used. This parameter requests the time interval between measurements as either a number of seconds or one of the standard time intervals "minimum" defined as the minimum interval available, "hour", "day", "week", "month", "year", "maximum" defined as the maximum interval available. If a number is given in seconds and that interval is not available, the closest available interval that is smaller (or the smallest available interval) will be returned. The 'minimum' interval gives the shortest available interval.
+        required: false
+        schema: 
+          oneOf:
+            - $ref: '#/components/schemas/time_series_standard_interval/properties/interval_standard'
+            - $ref: '#/components/schemas/time_series_seconds/properties/interval_seconds'
+      - name: object_id
+        in: query
+        description: Optional. Defines a specific data object for which to fetch data. This will return a single data object wrapped in the array.
+        required: false
+        schema: 
+          type: string
+      responses:
+        '200': 
+          description: OK
+          content: 
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  $ref: '#/components/schemas/data_object_measurements'
+
+        '400':
+          description: Bad input parameter
+  #'/project/{project_id}':
+  #  get:
+  #    summary: Returns measurements per project. Not supported by UDB.
+  #    description: Returns a specified collection of data for a specific project. Note that this is not supported by the UDB API specification and is a custom extension. There is no way for an app to fetch a list of project IDs from the UDB.
+  #    parameters: 
+  #    - name: project_id
+  #      in: path
+  #      description: Unique connection identifier
+  #      required: true
+  #      schema: 
+  #        type: string
+  #    - name: start
+  #      in: query
+  #      description: Starting timestamp, in seconds (POSIX).
+  #      required: true
+  #      schema: 
+  #        type: number
+  #    - name: end
+  #      in: query
+  #      description: End timestamp, in seconds (POSIX).
+  #      required: true
+  #      schema: 
+  #        type: number
+  #    - name: interval
+  #      in: query
+  #      description: Requested time interval between measurements as either a number of seconds or one of the standard time intervals "minimum" defined as the minimum interval available, "hour", "day", "week", "month", "year", "maximum" defined as the maximum interval available. If a number is given in seconds and that interval is not available, the closest available interval that is shorter will be returned. 
+  #      required: false
+  #      schema: 
+  #        oneOf:
+  #          - $ref: '#/components/schemas/time_series_standard_interval/properties/interval_standard'
+  #          - $ref: '#/components/schemas/time_series_seconds/properties/interval_seconds'
+  #    - name: object_id
+  #      in: query
+  #      description: Defines a specific data object for which to fetch data. This will return a single data object wrapped in the array.
+  #      required: false
+  #      schema: 
+  #        type: string
+  #    responses:
+  #      '200': 
+  #        description: OK
+  #        content: 
+  #          application/json:
+  #            schema: 
+  #              type: array
+  #              items: 
+  #                $ref: '#/components/schemas/data_object_measurements'
+  #      '400':
+  #        description: Bad input parameter
+components:
+  schemas:
+    profile:
+      type: object
+      description: The "profile" object lists certain metadata about the connection (often a home). <br/><br/>The "profile_log" contains information about when changes were made to the profile/connection. <br/><br/>The "supported_norms" variable gives an array of norms supported by this connection. The supported norms are standards that apply to the connection, such as EPV, NOM Keur or Monitoring Norm. A typical connection will probably conform to more than one standard at a time. Per standard, the documentation for that standard should be reviewed to know what that standard supports. Typically, it will involve a number of minimally available data objects with prespecified nomenclature. 
+      required: 
+      - tzid
+      - country
+      properties:
+        tzid:
+          type: string
+          description: The timezone ID of the connection should be in the format of the {Country}/{City} or metazone format such as  "Europe/Amsterdam". See the IANA TZID database or the CLDR metazone definitions http://unicode.org/repos/cldr/trunk/common/supplemental/metaZones.xml
+          example: "Europe/Amsterdam"
+          externalDocs:
+            url: https://www.iana.org/time-zones
+        country:
+          type: string
+          description: The country parameter describes the location of the connection from a political perspective. It should be the ISO Alpha-2 2-letter code for the country. 
+          example: "NL"
+        profile_log:
+          $ref: '#/components/schemas/log'
+        supported_norms:
+          type: array
+          description: An array of norms supported by a specific connection, with names and version numbers of the norms.
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Name of the monitoring norm (e.g. EPV, NOM Keur, Monitoring Norm).
+              version:
+                type: string
+                description: Version of the monitoring norm (e.g. 1.0). 
+            required:
+              - name
+              - version
+        coordinates:
+          type: array
+          description: Optional. These are GPS coordinates scrambled with a 10KM radius. It is provided in the format of GeoJSON describes in A.1 Points of RFC 7946. The scrambled location should be calculated only once to ensure the location cannot be derived with repeated requests. It should be provided in WGS84 (or EPSG:4326) as specified in the RFC and has an optional third element.
+          externalDocs:
+            url: https://tools.ietf.org/html/rfc7946#appendix-A.1
+          minItems: 2
+          maxItems: 3
+          example: [52.0996009,4.2942053]
+          items:
+            type: number
+    config:
+      type: object
+      description: Includes all data objects unique to a connection (usually a home and describes a) which data objects are relevant to this connection, b) their definition, and c) in the case that these variables are not measured but calculated, how these variables are calculated from measurements for this connection. 
+      required:
+        - rel_data_objects
+      properties:
+        rel_data_objects:
+          type: array
+          description: Array of all related data objects with their definitions.
+          items:
+            type: object
+            description: The definition of each object describes the data that comes from a sensor or, if applicable, how the data is calculated from other data_objects.
+            required: 
+              - object_id
+              - name
+              - unit
+            properties:
+              object_id:
+                type: integer
+                description: Unique identifier of the data_object.
+              name:
+                type: string
+                description: Name given to the data_object. Follow the API and any applicable monitoring norm guidelines as detailed in the documentation for the high level objects. Additionally, it is advised to follow standard nomenclature defined in the norm for underlying data objects used in calculations.
+              description:
+                type: string
+                description: Describes what the data_object measures.
+                minLength: 1
+                maxLength: 250
+              unit: 
+                type: string
+                description: Gives the SI (or SI derived) unit of measurement.
+              MID_certified: 
+                type: boolean
+                description: Describes whether the related sensor(s) is or are MID certified.
+              measurement_interval:
+                type: number
+                description: The number of seconds between each measurement if defined.
+              members: 
+                type: array
+                description: If the data_object does not represent a primitive value, this array lists the data_members its values are calculated from, by data_object name.
+                items:
+                  type: string
+                example:
+                  ["E_grid_T1","E_grid_T2","E_grid_nT1","E_grid_nT2"]
+              operations: 
+                type: array
+                description: If the data_object does not represent a primitive value, this array Lists the data_members and operations performed (+,-,/,*) on these members. 
+                items: 
+                  type: string
+                example: 
+                  ["E_grid_T1","+","E_grid_T2","-","E_grid_nT1","-","E_grid_nT2"]
+        config_log:
+          $ref: '#/components/schemas/log'      
+    data_object_measurements:
+      type: object
+      description: Returns measurements in a time series object and a log, which contains non-measurement information about these measurements, such as reasons for missing data and other anomolies.
+      required:
+        - object_id
+      properties:
+        object_id:
+          type: string
+        time_series:
+          oneOf:
+            - $ref: '#/components/schemas/time_series_standard_interval'
+            - $ref: '#/components/schemas/time_series_seconds'
+          example:
+            interval_standard: hour
+            data: [[1557996091,3],[1557999691,16]]
+        data_object_log:
+          $ref: '#/components/schemas/log'
+    time_series_standard_interval:
+      type: object
+      description: Defines the interval for aggregated or averaged series of data points in terms of predefined time periods, e.g. a daily or hourly aggregate. It is not required if each data point represents a single measurement.
+      required:
+        - data
+      properties:
+        interval_standard: 
+          type: string
+          description: Predefined intervals periods based on common date-time conventions, some of which can vary in length (e.g. month, year). Each interval can be identified by the timestamp of the first second of that interval, for example the first second of January based on the time zone specified in the connection's profile (tzid). 
+          enum:
+            - minimum
+            - hour
+            - day
+            - week
+            - month
+            - year
+            - maximum
+        data:
+         type: array
+         items:
+          $ref: '#/components/schemas/data_point'    
+    time_series_seconds:
+      type: object
+      description: Defines the interval for aggregated or averaged series of data points in terms of number of seconds. It is not required if each data point represents a single measurement.
+      required:
+        - data
+      properties:
+        interval_seconds:
+          type: integer
+          description: The number of seconds in an interval.
+          format: int32
+        data:
+         type: array
+         items:
+          $ref: '#/components/schemas/data_point'
+    data_point:
+      type: array
+      description: The data that comes from a sensor or an aggregation function. The first number is the time stamp, in POSIX seconds. If the data describes an aggregate value over a period of time, the time stamp is the first second of the corresponding time interval. The second number is the value.
+      minItems: 2
+      maxItems: 2
+      items:
+        type: number
+    log:
+      type: array
+      description: The log is an array of log entries.
+      items:
+        type: object
+        description: Each log entry is a description of one change, including when it occurred. 
+        required:
+          - entry
+          - entry_type
+          - start
+        properties:
+          entry: 
+            type: string
+            description: The entry is a description of the event.
+          log_severity:
+            type: string
+            description: Describes the type of log entry. This can be an error, a warning or information.
+            enum:
+              - error
+              - warning
+              - information
+          start:
+            type: number
+            description: Timestamp marking the start of the event, in POSIX seconds.
+          end:
+            type: number
+            description: Timestamp marking the end of the event, in POSIX seconds. If not defined, the event is ongoing.
+  securitySchemes:
+    JWTBearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      x-bearerInfoFunc: app.decode_token
+      
+    application:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: 'https://enermatics.eu/test/token'
+          scopes:
+            read: allows reading resources
+            write: allows modifying resources
+            configread: allows reading config data
