@@ -6,7 +6,7 @@ This API is developed as part of the monitoring norm (https://monitoringnorm.nl/
 ## What is in this repo
 There are several components of this repo:
 
-1. The API specifications. These specifications are synced FROM SwaggerHub (https://app.swaggerhub.com/apis/energiesprong/performance/0.4.6/) as unresolved yaml. It is NOT syncing bidirectionally, so any proposed changes will be reviewed in Github, and then changed in SwaggerHub through the admin (currently Marten). Documentation for Github Sync from Swagger can be found here: https://app.swaggerhub.com/help/integrations/github-sync
+1. The API specifications. These specifications are synced FROM SwaggerHub (https://app.swaggerhub.com/apis/energiesprong/performance/0.5.0/) as unresolved yaml. It is NOT syncing bidirectionally, so any proposed changes will be reviewed in Github, and then changed in SwaggerHub. 
 2. Issues. This is to report bugs and request features while working with the API.
 3. Wiki. This is to document the working of the API.  
 
@@ -16,7 +16,7 @@ Some things that might be very useful for you that are not here, are:
 - CI integration
 - Swagger Editor integration
 
-These were deemed overkill or overly complex for the situation.  
+These were deemed overkill for the situation.  
 
 ## How to work with this repo 
 Standard Github workflow applies. On top of that, the following is proposed:
